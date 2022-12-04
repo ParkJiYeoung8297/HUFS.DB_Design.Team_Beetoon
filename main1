@@ -1,0 +1,734 @@
+package dbee_pj;
+
+import java.awt.EventQueue;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import java.awt.Font;
+import javax.swing.JPanel;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import net.proteanit.sql.DbUtils;
+
+import javax.swing.JOptionPane;
+import javax.swing.JTextField;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JTable;
+import java.awt.event.ActionListener;
+import java.io.FileNotFoundException;
+import java.awt.event.ActionEvent;
+import javax.swing.DefaultComboBoxModel;
+import java.sql.*;
+import javax.swing.JScrollPane;
+import javax.swing.JList;
+import java.awt.Color;
+import javax.swing.JOptionPane;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.awt.SystemColor;
+
+
+public class main1 extends JFrame{
+
+	private JFrame frmMain;
+	private JTextField txtroom;
+	private JTextField txtfee;
+	private JTextField txtcustomer;
+	private JTable table;
+	private JComboBox txtfood;
+	private JTextField txtamount;
+	private JTextField txttotal;
+	private JTextField txtphone;
+	private JTextField txtemp;
+	private JTable table_1;
+	private JTable table_2;
+	///public inventory inv;
+	private JTextField txtassnum;
+	private JTextField txtnum;
+	private JTextField txttime;
+	//JButton btnNewButton_5 = new JButton("재고 관리");
+	
+	
+	/**
+	 * Launch the application.
+	 */
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					main1 window = new main1();
+					window.frmMain.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	/**
+	 * Create the application.
+	 */
+	public main1() {
+		initialize();
+		Connect();
+		table_load();
+		LoadCode();
+		room_table_load();		
+		
+	}
+	LocalDate now = LocalDate.now();
+	Connection con;
+	PreparedStatement pst;
+	ResultSet rs;
+
+	
+
+
+
+	
+	public void Connect()
+    {
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/beetoon", "root","1234");  // gui이름인 mysql과 연결
+        }
+        catch (ClassNotFoundException ex)  
+        {
+          ex.printStackTrace();
+        }
+        catch (SQLException ex)   
+        {
+            ex.printStackTrace();
+        }
+ 
+    }
+	
+	public void table_load() //조인 테이블
+    {
+     try
+     {  
+    pst = con.prepareStatement("select SAL_NUM AS NUM, SAL_PHONE AS PHONE, room_num as room, fee_hour as fee, ass_people as people, sal_name as product, sal_amount as amount\r\n"
+    		+ "from sales as s join assign as a on s.ass_num = a.ass_num\r\n"
+    		+ "ORDER BY SAL_NUM ASC;");
+    rs = pst.executeQuery();
+    table.setModel(DbUtils.resultSetToTableModel(rs)); 
+    pst = con.prepareStatement("SELECT room_num as room, room_maxp as max, room_sold as sold  FROM room;");
+    rs = pst.executeQuery();
+    table_1.setModel(DbUtils.resultSetToTableModel(rs)); 
+    
+     }
+     catch (SQLException e)
+     {
+     e.printStackTrace();
+     
+
+     }
+    }
+
+	public void search_table_load() //전화번호로 찾은 조인 테이블
+    {
+		String phone = txtphone.getText();
+     try
+     {
+    pst = con.prepareStatement("select SAL_NUM AS NUM, SAL_PHONE AS PHONE, room_num as room, fee_hour as fee, ass_people as people, sal_name as product, sal_amount as amount\r\n"
+    		+ "from sales as s join assign as a on s.ass_num = a.ass_num\r\n"
+    		+ "where ass_phone=?\r\n"
+    		+ "ORDER BY SAL_NUM ASC;");
+    pst.setString(1, phone); 
+    
+    rs = pst.executeQuery();
+    table.setModel(DbUtils.resultSetToTableModel(rs));
+    
+     }
+     catch (SQLException e)
+     {
+     e.printStackTrace();
+     
+
+     }
+    }
+	
+	
+	public void room_table_load()   ///방테이블 불러오기
+    {
+     try
+     {  
+    pst = con.prepareStatement("SELECT room_num as room, room_maxp as max, room_sold as sold  FROM room;");
+    rs = pst.executeQuery();
+    table_1.setModel(DbUtils.resultSetToTableModel(rs)); 
+     }
+     catch (SQLException e)
+     {
+     e.printStackTrace();
+     
+
+     }
+    }
+	
+	public void LoadCode()    
+    { 
+        try
+        {
+        	
+        pst = con.prepareStatement("SELECT prod_name FROM product ");
+        rs = pst.executeQuery();
+         
+        txtfood.removeAllItems();
+
+        while (rs.next())  
+          {
+        txtfood.addItem(rs.getString("prod_name"));
+          }
+        }
+        catch ( Exception e)
+        {
+           e.printStackTrace();
+        }
+    }
+	
+	
+	
+	 	
+
+        
+         
+	public void emp_table_load()
+	{
+		String food = txtfood.getSelectedItem().toString();
+     try
+     {
+    pst = con.prepareStatement("SELECT distinct(employee.emp_num) FROM employee join sales on employee.prod_name=sales.sal_name where sales.sal_name=? order by emp_num;");
+    pst.setString(1, food);  
+    rs = pst.executeQuery();
+    table_2.setModel(DbUtils.resultSetToTableModel(rs)); 
+     }
+     catch (SQLException e)
+     {
+     e.printStackTrace();
+     
+
+     }
+    }
+
+	
+	
+	
+	
+
+	/**
+	 * Initialize the contents of the frame.
+	 */
+	private void initialize() {
+	
+		
+		frmMain = new JFrame();
+		frmMain.setBounds(150, 20, 993, 650);
+		frmMain.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frmMain.getContentPane().setLayout(null);
+		
+		JLabel lblNewLabel = new JLabel("방:");
+		lblNewLabel.setBounds(38, 51, 52, 15);
+		frmMain.getContentPane().add(lblNewLabel);
+		
+		JLabel lblNewLabel_1 = new JLabel("요금제:");
+		lblNewLabel_1.setBounds(38, 123, 71, 15);
+		frmMain.getContentPane().add(lblNewLabel_1);
+		
+		JLabel lblNewLabel_2 = new JLabel("고객수:");
+		lblNewLabel_2.setBounds(38, 162, 52, 15);
+		frmMain.getContentPane().add(lblNewLabel_2);
+		
+		txtroom = new JTextField();
+		txtroom.setBounds(121, 48, 106, 21);
+		frmMain.getContentPane().add(txtroom);
+		txtroom.setColumns(10);
+		
+		txtfee = new JTextField();
+		txtfee.setBounds(121, 120, 106, 21);
+		frmMain.getContentPane().add(txtfee);
+		txtfee.setColumns(10);
+		
+		txtcustomer = new JTextField();
+		txtcustomer.setBounds(121, 159, 106, 21);
+		frmMain.getContentPane().add(txtcustomer);
+		txtcustomer.setColumns(10);
+		
+		JButton btnNewButton = 	new JButton("Search");
+		btnNewButton.setBounds(251, 86, 95, 23);
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String phone = txtphone.getText(); 
+	             try
+	                {
+	                pst = con.prepareStatement( "SELECT * FROM assign where ass_phone = ?" ); 
+
+	                pst.setString(1, phone);  
+	                rs = pst.executeQuery();
+	                
+	             if ( rs.next() == true )
+	                {
+	             txtroom.setText(rs.getString(6));
+	             txtfee.setText(rs.getString(7));  
+	             txtcustomer.setText(rs.getString(5));
+	             txtassnum.setText(rs.getString(1));
+	             
+	             search_table_load();
+	                         
+	                }
+	             else
+	             {
+	                 JOptionPane.showMessageDialog(null, "Record Not Found");
+	             }
+	             
+	             int total=0;
+	             pst = con.prepareStatement( " call roomcost (?);" );
+	             pst.setString(1, phone);  
+	             rs = pst.executeQuery();
+	             if ( rs.next() == true )
+	                {
+	            	 txttotal.setText(rs.getString(1));
+	             
+	                }
+	             else
+	             {
+	                 JOptionPane.showMessageDialog(null, "Record Not Found");
+	             }
+	            
+	             pst = con.prepareStatement( " select total from salestotal where sal_phone=?");
+	             pst.setString(1, phone);  
+	             rs = pst.executeQuery();
+	             if ( rs.next() == true )
+	                {
+	            	 
+	            	 txttotal.setText(Integer.toString(Integer.valueOf(rs.getString(1))+ Integer.valueOf(txttotal.getText())));
+	           
+	             
+	                }
+	             else
+	             {
+	                 JOptionPane.showMessageDialog(null, "Record Not Found");
+	             }
+	             
+	             
+	                }
+	                catch ( Exception e1 )
+	                {
+	                e1.printStackTrace();
+	                }
+				
+				
+			}
+		});
+		frmMain.getContentPane().add(btnNewButton);
+		
+		JLabel lblNewLabel_3 = new JLabel("음식:");
+		lblNewLabel_3.setBounds(373, 51, 52, 15);
+		frmMain.getContentPane().add(lblNewLabel_3);
+		
+		txtfood = new JComboBox();
+		txtfood.setBounds(415, 47, 95, 23);
+		frmMain.getContentPane().add(txtfood);
+		
+		txtamount = new JTextField();
+		txtamount.setBounds(518, 48, 41, 21);
+		frmMain.getContentPane().add(txtamount);
+		txtamount.setColumns(10);
+		
+		JScrollPane scrollPane = new JScrollPane();
+		scrollPane.setBounds(38, 219, 589, 262);
+		frmMain.getContentPane().add(scrollPane);
+		
+		table = new JTable();
+		scrollPane.setViewportView(table);
+		
+		JButton btnNewButton_1 = new JButton("Order");
+		btnNewButton_1.setBounds(571, 47, 95, 23);
+		btnNewButton_1.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String room,phone,food,amount,emp,fee,customer,assnum;
+				//String newqty;
+				
+				room = txtroom.getText();
+				phone=txtphone.getText();
+				food = txtfood.getSelectedItem().toString();
+				amount = txtamount.getText();
+				fee = txtamount.getText();
+				customer = txtamount.getText();
+				emp=txtemp.getText();
+				assnum=txtassnum.getText();
+				emp_table_load();
+				
+				try {
+				pst = con.prepareStatement("insert into sales values(null,?,?,?,?,?);");
+				
+				pst.setString(1, food);
+				pst.setString(2, amount);
+				pst.setString(3, assnum);
+				pst.setString(4, phone);
+				pst.setString(5, emp);
+				pst.executeUpdate();
+				
+				pst = con.prepareStatement("update inventory set inv_qty=inv_qty-? where prod_name =?");
+				pst.setString(1, amount);
+				pst.setString(2, food);
+				pst.executeUpdate();
+				
+				JOptionPane.showMessageDialog(null, "ORDER COMPLETED");
+				table_load();
+				
+				txtfood.setSelectedItem("");
+				txtamount.setText("");
+				txtassnum.setText("");
+				txtemp.setText("");
+				
+				txtphone.requestFocus();
+
+				   }
+				 
+				catch (SQLException e1)
+				        {
+				e1.printStackTrace();
+				JOptionPane.showMessageDialog(null, "Record Failed");
+				}
+
+				
+				
+				
+				
+			}
+		});
+		frmMain.getContentPane().add(btnNewButton_1);
+		
+		JButton btnNewButton_2 = new JButton("update");
+		btnNewButton_2.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String room,customer,fee,phone;
+				room = txtroom.getText();
+	            customer = txtcustomer.getText();
+	            fee = txtfee.getText();
+	            phone=txtphone.getText();
+				
+	            try {
+	                pst = con.prepareStatement("update assign set room_num= ?,ass_people=?,fee_hour=? where ass_phone =?");
+	                pst.setString(1, room);
+	                pst.setString(2, customer);
+	                pst.setString(3, fee);
+	                pst.setString(4, phone);
+	                pst.executeUpdate();
+	                JOptionPane.showMessageDialog(null, "Update");
+	                table_load();
+	                txtroom.setText("");
+					txtfee.setText("");
+					txtcustomer.setText("");
+					txtassnum.setText("");
+					txtroom.requestFocus();
+	                
+	                
+	                
+	                }
+	                 
+	                            catch (SQLException e1) {
+	                e1.printStackTrace();
+	                }
+	                
+				
+				
+				
+			}
+		});
+				
+				
+				
+			
+
+		btnNewButton_2.setBounds(838, 238, 95, 35);
+		frmMain.getContentPane().add(btnNewButton_2);
+		
+		JButton btnNewButton_3 = new JButton("Delete");
+		btnNewButton_3.setBounds(838, 306, 95, 35);
+		btnNewButton_3.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String num;
+				num=txtnum.getText();
+	   
+	            try {
+	            	pst = con.prepareStatement("delete from sales where sal_num =? ");
+	                pst.setString(1, num);
+	                pst.executeUpdate();
+	                JOptionPane.showMessageDialog(null, "Delete");
+	                table_load();
+	                LoadCode();
+	                room_table_load();
+	                
+	                //pst = con.prepareStatement(" update inventory set inv_qty=inv_qty+? where prod_name =? ");
+	               // pst.setString(1, num);
+	                //pst.setString(1, num);
+	                //pst.executeUpdate();
+	              
+	                txtroom.setText("");
+					txtfee.setText("");
+					txtcustomer.setText("");
+					txtamount.setText("");
+					txtphone.setText("");
+					txtemp.setText("");
+					txtassnum.setText("");
+					txtnum.setText("");
+					txtroom.requestFocus();
+					table_load();
+					LoadCode();
+					
+                    
+               
+	            }
+
+	                catch (SQLException e1) {
+	            e1.printStackTrace();
+	            }
+				
+				
+			}
+		});
+		frmMain.getContentPane().add(btnNewButton_3);
+		
+		JButton btnNewButton_4 = new JButton("Refresh");
+		btnNewButton_4.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				txtroom.setText("");
+				txtfee.setText("");
+				txtcustomer.setText("");
+				txtamount.setText("");
+				txtphone.setText("");
+				txtemp.setText("");
+				txtassnum.setText("");
+				txtnum.setText("");
+				txttotal.setText("");
+				txtroom.requestFocus();
+				table_load();
+				LoadCode();
+				room_table_load();
+				
+			}
+		});
+		btnNewButton_4.setBounds(838, 366, 95, 35);
+		frmMain.getContentPane().add(btnNewButton_4);
+		
+		JLabel lblNewLabel_4 = new JLabel("Total:");
+		lblNewLabel_4.setBounds(639, 450, 52, 15);
+		frmMain.getContentPane().add(lblNewLabel_4);
+		
+		txttotal = new JTextField();
+		txttotal.setBounds(703, 447, 106, 21);
+		frmMain.getContentPane().add(txttotal);
+		txttotal.setColumns(10);
+		
+		JLabel lblNewLabel_5 = new JLabel("전화번호:");
+		lblNewLabel_5.setBounds(38, 90, 71, 15);
+		frmMain.getContentPane().add(lblNewLabel_5);
+		
+		txtphone = new JTextField();
+		txtphone.setBounds(121, 89, 106, 21);
+		frmMain.getContentPane().add(txtphone);
+		txtphone.setColumns(10);
+		
+		JScrollPane scrollPane_1 = new JScrollPane();
+		scrollPane_1.setBounds(639, 219, 181, 209);
+		frmMain.getContentPane().add(scrollPane_1);
+		
+		table_1 = new JTable();
+		scrollPane_1.setViewportView(table_1);
+		
+		JButton btnNewButton_5 = new JButton("재고 관리");
+		
+		btnNewButton_5.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {  
+		         
+				inventory1 nw = new inventory1();
+	            nw.NewScreen();
+			}
+		});
+		btnNewButton_5.setBounds(748, 21, 166, 55);		
+		frmMain.getContentPane().add(btnNewButton_5);
+		
+		JButton btnNewButton_6 = new JButton("분석");
+		btnNewButton_6.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				graph nw = new graph();
+	            nw.SalesGraph();
+			}
+		});
+		btnNewButton_6.setBounds(748, 115, 166, 55);
+		frmMain.getContentPane().add(btnNewButton_6);
+		
+		JLabel lblNewLabel_6 = new JLabel("emp: ");
+		lblNewLabel_6.setBounds(373, 90, 41, 15);
+		frmMain.getContentPane().add(lblNewLabel_6);
+		
+		JButton btnNewButton_7 = new JButton("Add");
+		btnNewButton_7.setBounds(251, 47, 95, 23);
+		btnNewButton_7.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				
+				String phone,customer,room,fee;
+				phone=txtphone.getText();
+				customer = txtcustomer.getText();
+				room = txtroom.getText();
+				fee = txtfee.getText();
+				
+
+				try {
+					
+										
+				pst = con.prepareStatement("insert into assign values(null,?,NOW(),?,?,?,?);");
+				pst.setString(1, phone);
+				pst.setString(2, "0000-00-00 00:00:00");
+				pst.setString(3, customer);
+				pst.setString(4, room);
+				pst.setString(5, fee);
+				pst.executeUpdate();
+				
+				pst = con.prepareStatement("call deadline (?);");
+				pst.setString(1, phone);
+				pst.executeUpdate();			
+				JOptionPane.showMessageDialog(null, "ADD COMPLETED");
+				
+				
+				table_load();
+				pst = con.prepareStatement("update room set room_sold=1 where room_num=?");
+				pst.setString(1, room);
+				pst.executeUpdate();
+				room_table_load();	
+				
+				
+				txtroom.setText("");
+				txtfee.setText("");
+				txtcustomer.setText("");
+				txtfee.requestFocus();
+
+				   }
+				 
+				catch (SQLException e1)
+				        {
+				e1.printStackTrace();
+				JOptionPane.showMessageDialog(null, "Record Failed");
+				}
+				
+				
+				
+				
+			}
+		});
+		frmMain.getContentPane().add(btnNewButton_7);
+		
+		JScrollPane scrollPane_2 = new JScrollPane();
+		scrollPane_2.setBounds(519, 89, 63, 55);
+		frmMain.getContentPane().add(scrollPane_2);
+		
+		table_2 = new JTable();
+		scrollPane_2.setViewportView(table_2);
+		
+		txtemp = new JTextField();
+		txtemp.setBounds(415, 87, 95, 21);
+		frmMain.getContentPane().add(txtemp);
+		txtemp.setColumns(10);
+		
+		JButton btnNewButton_8 = new JButton("");
+		btnNewButton_8.setBounds(594, 94, 15, 15);
+		btnNewButton_8.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				emp_table_load();
+			}
+		});
+		btnNewButton_8.setForeground(Color.GREEN);
+		frmMain.getContentPane().add(btnNewButton_8);
+		
+		JLabel lblNewLabel_7 = new JLabel("ass_num: ");
+		lblNewLabel_7.setBounds(38, 194, 89, 15);
+		frmMain.getContentPane().add(lblNewLabel_7);
+		
+		txtassnum = new JTextField();
+		txtassnum.setBounds(121, 188, 106, 21);
+		frmMain.getContentPane().add(txtassnum);
+		txtassnum.setColumns(10);
+		
+		JLabel lblNewLabel_8 = new JLabel("Num:");
+		lblNewLabel_8.setBounds(373, 123, 52, 15);
+		frmMain.getContentPane().add(lblNewLabel_8);
+		
+		txtnum = new JTextField();
+		txtnum.setBounds(415, 120, 95, 21);
+		frmMain.getContentPane().add(txtnum);
+		txtnum.setColumns(10);
+		
+		JPanel panel = new JPanel();
+		panel.setBounds(639, 490, 302, 113);
+		frmMain.getContentPane().add(panel);
+		panel.setLayout(null);
+		
+		JButton btnNewButton_10 = new JButton("개점 처리");
+		btnNewButton_10.setBounds(42, 49, 95, 54);
+		panel.add(btnNewButton_10);
+		
+		
+			txttime = new JTextField();
+		txttime.setBackground(SystemColor.control);
+		txttime.setBounds(42, 10, 188, 21);
+		panel.add(txttime);
+		txttime.setColumns(10);
+		
+		JButton btnNewButton_9 = new JButton("마감 처리");
+		btnNewButton_9.setBounds(149, 49, 95, 55);
+		panel.add(btnNewButton_9);
+		btnNewButton_9.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String time;
+				
+				time=txttime.getText();
+				String msg=time+ "의 마감이 진행됩니다.";
+				JOptionPane.showConfirmDialog(null, msg, "마감", JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE);
+
+				try {
+				
+				pst = con.prepareStatement("delete from sales ;");
+				pst.executeUpdate();	
+					
+				pst = con.prepareStatement("delete from assign ;");
+				pst.executeUpdate();
+				
+
+				JOptionPane.showMessageDialog(null, "완료되었습니다");
+				
+				txttime.setText("");
+				txttime.requestFocus();
+
+				   }
+				 
+				catch (SQLException e1)
+				        {
+				e1.printStackTrace();
+				JOptionPane.showMessageDialog(null, "Record Failed");
+				}
+				
+				
+				
+				
+				
+			}
+		});
+		btnNewButton_10.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				LocalDate now = LocalDate.now();
+				String time;
+				time=txttime.getText();
+				String DateNow = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+				txttime.setText(DateNow);
+				
+				
+			}
+		});
+	}
+}
