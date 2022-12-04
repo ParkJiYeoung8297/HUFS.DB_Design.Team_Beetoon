@@ -27,9 +27,9 @@ import javax.swing.JTextField;
 import java.awt.Canvas;
 import java.awt.Panel;
 
-public class inventory {
+public class inventory1 {
 
-	private JFrame frame;
+	private JFrame frmInventory;
 	private JTable table;
 	private JComboBox txtproduct;
 	private JTextField txtcode;
@@ -42,12 +42,12 @@ public class inventory {
 	/**
 	 * Launch the application.
 	 */
-	public static void main(String[] args) {
+	public static void NewScreen() {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					inventory window = new inventory();
-					window.frame.setVisible(true);
+					inventory1 window = new inventory1();
+					window.frmInventory.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -58,10 +58,11 @@ public class inventory {
 	/**
 	 * Create the application.
 	 */
-	public inventory() {
+	public inventory1() {
 		initialize();
 		Connect();
 	    table_load();
+	    table_load2();
 	    LoadCode();	
 	}
 	
@@ -70,6 +71,7 @@ public class inventory {
 	Connection con;
 	PreparedStatement pst;
 	ResultSet rs;
+	private JTable table_1;
 	
 
 	
@@ -90,7 +92,7 @@ public class inventory {
  
     }
 	
-	public void table_load() //조인 테이블
+	public void table_load() 
     {
      try
      {  
@@ -106,13 +108,30 @@ public class inventory {
 
      }
     }
+	public void table_load2()
+    {
+     try
+     {  
+    pst = con.prepareStatement("select prod_name  as product ,inv_qty as qty from inventory\r\n"
+    		+ "where inv_qty<inv_min;");
+    rs = pst.executeQuery();
+    table_1.setModel(DbUtils.resultSetToTableModel(rs)); 
+    
+     }
+     catch (SQLException e)
+     {
+     e.printStackTrace();
+     
+
+     }
+    }
 	
 	public void LoadCode()    
     { 
         try
         {
         	
-        pst = con.prepareStatement("SELECT prod_name FROM inventory;");
+        pst = con.prepareStatement("SELECT prod_name FROM product;");
         rs = pst.executeQuery();
          
         txtproduct.removeAllItems();
@@ -135,19 +154,19 @@ public class inventory {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		frame = new JFrame();
-		frame.setBounds(100, 100, 824, 617);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.getContentPane().setLayout(null);
+		frmInventory = new JFrame();
+		frmInventory.setBounds(200, 30, 824, 617);
+		frmInventory.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frmInventory.getContentPane().setLayout(null);
 		
 		JLabel lblNewLabel = new JLabel("재고");
 		lblNewLabel.setBounds(39, 23, 103, 35);
 		lblNewLabel.setFont(new Font("굴림", Font.BOLD, 30));
-		frame.getContentPane().add(lblNewLabel);
+		frmInventory.getContentPane().add(lblNewLabel);
 		
 		JPanel panel = new JPanel();
 		panel.setBounds(29, 55, 756, 497);
-		frame.getContentPane().add(panel);
+		frmInventory.getContentPane().add(panel);
 		panel.setLayout(null);
 		
 		JLabel lblNewLabel_1 = new JLabel("상품:");
@@ -159,7 +178,7 @@ public class inventory {
 		panel.add(txtproduct);
 		
 		JButton btnNewButton = new JButton("Search");
-		btnNewButton.setBounds(193, 39, 95, 23);
+		btnNewButton.setBounds(193, 39, 116, 23);
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String product = txtproduct.getSelectedItem().toString();
@@ -204,11 +223,33 @@ public class inventory {
 		panel.add(btnNewButton);
 		
 		JButton btnNewButton_1 = new JButton("발주 신청");
-		btnNewButton_1.setBounds(193, 93, 95, 51);
+		btnNewButton_1.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String product;
+	            product=txtproduct.getSelectedItem().toString();
+				
+	            try {
+	                pst = con.prepareStatement("update inventory set inv_qty=inv_qty+inv_order where prod_name =?");
+	                pst.setString(1, product);
+	                pst.executeUpdate();
+	                JOptionPane.showMessageDialog(null, "발주 신청이 완료되었습니다.");
+	                table_load();
+	                LoadCode();
+	                table_load2();
+	                     
+	                }
+	                 
+	                            catch (SQLException e1) {
+	                e1.printStackTrace();
+	                }
+				
+			}
+		});
+		btnNewButton_1.setBounds(193, 93, 116, 51);
 		panel.add(btnNewButton_1);
 		
 		JButton btnNewButton_2 = new JButton("Refresh");
-		btnNewButton_2.setBounds(627, 121, 95, 23);
+		btnNewButton_2.setBounds(627, 125, 95, 23);
 		btnNewButton_2.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				txtcode.setText("");
@@ -227,7 +268,7 @@ public class inventory {
 		panel.add(btnNewButton_2);
 		
 		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setBounds(25, 274, 697, 213);
+		scrollPane.setBounds(25, 274, 473, 213);
 		panel.add(scrollPane);
 		
 		table = new JTable();
@@ -272,7 +313,7 @@ public class inventory {
 		txtorder.setColumns(10);
 		
 		JButton btnNewButton_3 = new JButton("Update");
-		btnNewButton_3.setBounds(627, 19, 95, 23);
+		btnNewButton_3.setBounds(627, 55, 95, 23);
 		btnNewButton_3.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String code,qty,min,order,product;
@@ -292,6 +333,7 @@ public class inventory {
 	                pst.executeUpdate();
 	                            JOptionPane.showMessageDialog(null, "Update");
 	                            table_load();
+	                            table_load2();
 	                            LoadCode();
 	                          
 	                            txtcode.setText("");
@@ -342,7 +384,7 @@ public class inventory {
 				
 			}
 		});
-		btnNewButton_5.setBounds(627, 68, 95, 23);
+		btnNewButton_5.setBounds(627, 93, 95, 23);
 		panel.add(btnNewButton_5);
 		
 		JLabel lblNewLabel_6 = new JLabel("New 상품:");
@@ -354,7 +396,7 @@ public class inventory {
 		panel.add(txtnew);
 		txtnew.setColumns(10);
 		
-		JButton btnNewButton_4 = new JButton("Add");
+		JButton btnNewButton_4 = new JButton("Add New Item");
 		btnNewButton_4.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String code,qty,min,order,newproduct,price,cost;
@@ -366,21 +408,15 @@ public class inventory {
 	            price = txtprice.getText();
 	            cost=txtcost.getText();
 				
-				
+	            ///insert into product values(?,?,?); 
 	            try {
-	            	pst = con.prepareStatement("insert into product values(?,?,?);");
+	            	pst = con.prepareStatement("call productadd(?, ?, ?);");
 	            	pst.setString(1, newproduct);
 	                pst.setString(2, price);
 	                pst.setString(3, cost);
 	                pst.executeUpdate();
 	                
-	            	pst = con.prepareStatement("insert into inventory values(?,?,?,?,?);");
-	                pst.setString(1, code);
-	                pst.setString(2, qty);
-	                pst.setString(3, min);
-	                pst.setString(4,order);
-	                pst.setString(5,newproduct);
-	                pst.executeUpdate();
+	            	
 	                JOptionPane.showMessageDialog(null, "ADD");
 	                table_load();
 	                LoadCode();
@@ -390,17 +426,19 @@ public class inventory {
 	                txtmin.setText("");
 	                txtorder.setText("");
 	                txtnew.setText("");
+	                txtprice.setText("");
+	                txtcost.setText("");
 	                txtcode.requestFocus();
 	                }
 	                 
 	                catch (SQLException e1) {
 	                e1.printStackTrace();
-	                JOptionPane.showMessageDialog(null, "Record Failed");
+	                JOptionPane.showMessageDialog(null, "상품을 추가할 수 없습니다");
 	                }
 	         
 			}
 		});
-		btnNewButton_4.setBounds(193, 177, 95, 23);
+		btnNewButton_4.setBounds(193, 177, 116, 23);
 		panel.add(btnNewButton_4);
 		
 		JLabel lblNewLabel_7 = new JLabel("상품 가격:");
@@ -420,6 +458,56 @@ public class inventory {
 		txtcost.setBounds(76, 232, 96, 21);
 		panel.add(txtcost);
 		txtcost.setColumns(10);
+		
+		JScrollPane scrollPane_1 = new JScrollPane();
+		scrollPane_1.setBounds(534, 274, 188, 213);
+		panel.add(scrollPane_1);
+		
+		table_1 = new JTable();
+		scrollPane_1.setViewportView(table_1);
+		
+		JButton btnNewButton_6 = new JButton("Add");
+		btnNewButton_6.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				String code,qty,min,order,product,price,cost;
+				code = txtcode.getText();
+	            qty = txtqty.getText();
+	            min = txtmin.getText();
+	            order = txtorder.getText();
+	            product=txtproduct.getSelectedItem().toString();
+				
+	            ///insert into product values(?,?,?); 
+	            try {
+	            		                
+	            	pst = con.prepareStatement("insert into inventory values(?,?,?,?,?);");
+	                pst.setString(1, code);
+	                pst.setString(2, qty);
+	                pst.setString(3, min);
+	                pst.setString(4,order);
+	                pst.setString(5,product);
+	                pst.executeUpdate();
+	                JOptionPane.showMessageDialog(null, "ADD");
+	                table_load();
+	                LoadCode();
+	                          
+	                txtcode.setText("");
+	                txtqty.setText("");
+	                txtmin.setText("");
+	                txtorder.setText("");
+	                txtnew.setText("");
+	                txtcode.requestFocus();
+	                }
+	                 
+	                catch (SQLException e1) {
+	                e1.printStackTrace();
+	                JOptionPane.showMessageDialog(null, "상품을 추가할 수 없습니다");
+	                }
+	         
+				
+			}
+		});
+		btnNewButton_6.setBounds(627, 19, 95, 23);
+		panel.add(btnNewButton_6);
 		
 		
 	}
