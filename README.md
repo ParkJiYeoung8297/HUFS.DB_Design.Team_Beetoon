@@ -32,6 +32,8 @@
 
 
 3.화면설계서
+
+
 <img width="449" alt="첫 화면" src="https://github.com/ParkJiYeoung8297/HUFS.DB_Design.Team_Beetoon/assets/89844427/2d09f4eb-64df-42d7-951f-e13acb4fbbe9">
 
 
@@ -64,6 +66,9 @@
 3. 상품의 추가에서 띄어쓰기를 인식하지 못하는 문제는 모든 공백을 제거하는 REPLACE()함수를 이용했습니다.
 
 5.프로젝트 진행 일정
+
+
+
    <img width="852" alt="스크린샷 2023-09-02 오전 1 59 30" src="https://github.com/ParkJiYeoung8297/HUFS.DB_Design.Team_Beetoon/assets/89844427/2279230b-67fa-420c-b574-eddbb9b583c1">
 
 
